@@ -219,6 +219,14 @@
             pointer-events: none;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
+        .btn-success {
+            background: #2e7d32;
+            border-color: #4caf50;
+        }
+        .btn-success:hover {
+            background: #388e3c;
+            border-color: #66bb6a;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -231,6 +239,16 @@
     <div id="toolbar" class="panel">
         <strong style="font-size: 14px; margin-right: 8px;">🧊 3D Model Engine</strong>
         
+        <!-- Gestión de Proyecto (Nuevo, Cargar, Guardar) -->
+        <div style="display: flex; gap: 6px;">
+            <button onclick="newProject()">📄 Nuevo</button>
+            <button onclick="document.getElementById('file-load-project').click()">📂 Cargar</button>
+            <button class="btn-success" onclick="saveProject()">💾 Guardar</button>
+            <input type="file" id="file-load-project" accept=".json" style="display:none;" onchange="loadProject(event)">
+        </div>
+
+        <span style="color: rgba(255,255,255,0.2);">|</span>
+
         <div class="mode-selector">
             <button id="btn-mode-model" class="mode-btn active" onclick="switchMode('modeling')">📐 Modelado</button>
             <button id="btn-mode-anim" class="mode-btn" onclick="switchMode('animation')">🎬 Animación</button>
@@ -238,7 +256,6 @@
 
         <span style="color: rgba(255,255,255,0.2);">|</span>
 
-        <!-- Los objetos se pueden agregar siempre, independientemente del modo activo -->
         <div id="object-tools" style="display: flex; gap: 6px;">
             <button onclick="addPrimitive('cube')">+ Cubo</button>
             <button onclick="addPrimitive('sphere')">+ Esfera</button>
@@ -322,7 +339,7 @@
                 <label>Ver Cuadrícula</label>
                 <input type="checkbox" id="toggle-grid" checked onchange="toggleGrid(this.checked)">
             </div>
-            <button style="width: 100%; margin-top: 5px;" onclick="exportOBJ()">💾 Exportar .OBJ</button>
+            <button style="width: 100%; margin-top: 5px;" onclick="exportOBJ()">💾 Exportar Modelo .OBJ</button>
         </div>
     </div>
 
@@ -442,6 +459,134 @@
             animate();
         }
 
+        /* --- Funciones de Proyecto: Nuevo, Cargar y Guardar --- */
+        function newProject() {
+            if (objects.length > 0 && !confirm("¿Quieres iniciar un proyecto nuevo? Se borrarán los objetos y fotogramas actuales.")) {
+                return;
+            }
+
+            if (isPlaying) stopPlayback();
+            selectObject(null);
+
+            // Eliminar objetos existentes
+            objects.forEach(obj => {
+                scene.remove(obj);
+                obj.geometry.dispose();
+                if (obj.material.map) obj.material.map.dispose();
+                obj.material.dispose();
+            });
+            objects = [];
+
+            // Reiniciar animación y fotogramas
+            frames = [];
+            currentFrameIndex = 0;
+
+            // Agregar cubo inicial por defecto
+            addPrimitive('cube');
+            saveCurrentFrameTransforms();
+            renderFrameStrip();
+            updateObjCount();
+        }
+
+        function saveProject() {
+            saveCurrentFrameTransforms();
+
+            const projectData = {
+                version: "1.0",
+                fps: animFPS,
+                objects: objects.map(obj => ({
+                    uuid: obj.uuid,
+                    name: obj.name,
+                    type: obj.geometry.type,
+                    color: '#' + obj.material.color.getHexString(),
+                    wireframe: obj.material.wireframe
+                })),
+                frames: frames
+            };
+
+            const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `proyecto_3d_${Date.now()}.json`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function loadProject(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.objects || !data.frames) {
+                        alert("El archivo seleccionado no tiene un formato válido de proyecto 3D.");
+                        return;
+                    }
+
+                    if (isPlaying) stopPlayback();
+                    selectObject(null);
+
+                    // Limpiar escena actual
+                    objects.forEach(obj => {
+                        scene.remove(obj);
+                        obj.geometry.dispose();
+                        if (obj.material.map) obj.material.map.dispose();
+                        obj.material.dispose();
+                    });
+                    objects = [];
+
+                    // Reconstruir objetos
+                    data.objects.forEach(objData => {
+                        let geometry;
+                        const type = objData.type;
+
+                        if (type.includes('Box')) geometry = new THREE.BoxGeometry(1, 1, 1);
+                        else if (type.includes('Sphere')) geometry = new THREE.SphereGeometry(0.75, 24, 24);
+                        else if (type.includes('Cylinder')) geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 24);
+                        else if (type.includes('Plane')) geometry = new THREE.PlaneGeometry(2, 2);
+                        else if (type.includes('Torus')) geometry = new THREE.TorusGeometry(0.6, 0.2, 16, 24);
+                        else geometry = new THREE.BoxGeometry(1, 1, 1);
+
+                        const material = new THREE.MeshStandardMaterial({
+                            color: objData.color || 0xffffff,
+                            wireframe: !!objData.wireframe,
+                            roughness: 0.4,
+                            metalness: 0.1
+                        });
+                        if (type.includes('Plane')) material.side = THREE.DoubleSide;
+
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.name = objData.name || "Objeto";
+                        mesh.uuid = objData.uuid;
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+
+                        scene.add(mesh);
+                        objects.push(mesh);
+                    });
+
+                    // Cargar fotogramas y configuración
+                    frames = data.frames;
+                    currentFrameIndex = 0;
+
+                    if (data.fps) {
+                        animFPS = data.fps;
+                        document.getElementById('fps-input').value = animFPS;
+                    }
+
+                    applyFrameTransforms(0);
+                    updateObjCount();
+                } catch (err) {
+                    alert("Error al procesar el archivo del proyecto.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Resetear selector de archivo
+        }
+
+        /* --- Gestión de Modo y Animación --- */
         function switchMode(mode) {
             currentMode = mode;
             if(isPlaying) stopPlayback();
@@ -658,7 +803,6 @@
             if (isPlaying) stopPlayback();
         }
 
-        // Crear primitivas (Funciona en Modelado y en Animación)
         function addPrimitive(type) {
             let geometry, mesh;
             const material = new THREE.MeshStandardMaterial({
@@ -684,7 +828,6 @@
             scene.add(mesh);
             objects.push(mesh);
 
-            // Sincronizar el objeto creado en todos los frames de la animación
             frames.forEach(f => {
                 if (!f[mesh.uuid]) {
                     f[mesh.uuid] = {
