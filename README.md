@@ -1,5 +1,4 @@
-`Requistos minímos:`
-
+`Requisitos mínimos:`
 
 Navegador Web: Chrome, Edge, Firefox o Brave (con soporte activo para WebGL 2.0 y la MediaRecorder API para guardar en WebM).
 
@@ -13,5 +12,6 @@ Pantalla: Resolución de 1280×720 (necesaria para visualizar cómodamente el ca
 
 Almacenamiento: ~100 MB libres para la caché de texturas y renderizado de video local.
 
-Recuerda que si quieres grabar un video lo recomendable es grabar un video que grabar la WEBM presionando Windows + Alt + R y en mac Comando + Shift + 5 y lo mismo si quieres guardar el proyecto, lo recomendable es exportar JSON y tomar captura de pantalla
+Recuerda que si quieres grabar un video lo recomendable es grabarlo de forma externa presionando Windows + Alt + R (en Windows) o Comando + Shift + 5 (en Mac). De igual forma, para guardar el proyecto de manera segura, lo recomendable es exportar el archivo JSON y tomar una captura de pantalla.
+
 <img width="1905" height="935" alt="Captura de pantalla 2026-09-12 204206" src="https://github.com/user-attachments/assets/dfdce883-1ce7-462c-9cf1-8d97f586e7ed" />
