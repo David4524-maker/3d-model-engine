@@ -13,5 +13,5 @@ Pantalla: Resolución de 1280×720 (necesaria para visualizar cómodamente el ca
 
 Almacenamiento: ~100 MB libres para la caché de texturas y renderizado de video local.
 
-Recuerda que si quieres grabar un video lo recomendable es grabar un video que grabar la WEBM presionando Windows + Shift + Esc o Windows + Alt + R y en mac Comando + Shift + 5 y lo mismo si quieres guardar el proyecto, lo recomendable es exportar JSON y tomar captura de pantalla
+Recuerda que si quieres grabar un video lo recomendable es grabar un video que grabar la WEBM presionando Windows + Alt + R y en mac Comando + Shift + 5 y lo mismo si quieres guardar el proyecto, lo recomendable es exportar JSON y tomar captura de pantalla
 <img width="1905" height="935" alt="Captura de pantalla 2026-09-12 204206" src="https://github.com/user-attachments/assets/dfdce883-1ce7-462c-9cf1-8d97f586e7ed" />
