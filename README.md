@@ -1,4 +1,4 @@
-`Requistos minimos:`
+`Requistos minímos:`
 
 
 Navegador Web: Chrome, Edge, Firefox o Brave (con soporte activo para WebGL 2.0 y la MediaRecorder API para guardar en WebM).
